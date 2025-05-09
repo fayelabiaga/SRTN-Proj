@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRTN Scheduling Algorithm | CPU Scheduling</title>
+    <link rel="stylesheet" href="homepage.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <div class="cpu-icon">
+                        <div class="cpu-core"></div>
+                        <div class="cpu-pin"></div>
+                        <div class="cpu-pin"></div>
+                        <div class="cpu-pin"></div>
+                        <div class="cpu-pin"></div>
+                    </div>
+                </div>
+                <span>SRTN Scheduler</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#about" class="active">About</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#comparison">Application</a></li>
+                <li><a href="index.html" class="try-button">Scheduler</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Shortest Remaining Time Next</h1>
+                <p class="subtitle">A Preemptive CPU Scheduling Algorithm</p>
+                <p class="description">
+                    Optimize CPU utilization and minimize average waiting time with the SRTN scheduling algorithm.
+                    Learn how it works and try our interactive scheduler.
+                </p>
+                <div class="hero-buttons">
+                    <a href="index.html" class="primary-button">Start SRTN Scheduler</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="cpu-animation">
+                    <div class="process p1">P1</div>
+                    <div class="process p2">P2</div>
+                    <div class="process p3">P3</div>
+                    <div class="process p4">P4</div>
+                    <div class="cpu">
+                        <div class="cpu-inner">CPU</div>
+                        <div class="cpu-pulse"></div>
+                    </div>
+                    <div class="arrow a1"></div>
+                    <div class="arrow a2"></div>
+                    <div class="arrow a3"></div>
+                    <div class="arrow a4"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="section-header">
+                <h2>What is SRTN?</h2>
+                <div class="underline"></div>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>
+                        <strong>Shortest Remaining Time Next (SRTN)</strong>, also known as Shortest Remaining Time First (SRTF), 
+                        is a preemptive scheduling algorithm used in operating systems to efficiently allocate CPU time to processes.
+                    </p>
+                    <p>
+                        SRTN is a preemptive version of the Shortest Job First (SJF) algorithm. In SRTN, the process with the 
+                        smallest amount of time remaining until completion is selected to execute. If a new process arrives with 
+                        a shorter burst time than the remaining time of the current executing process, the current process is preempted.
+                    </p>
+                    <p>
+                        This algorithm is designed to minimize the average waiting time for a given set of processes, making it 
+                        optimal for scenarios where minimizing wait time is a priority.
+                    </p>
+                </div>
+                <div class="about-card">
+                    <div class="card-header">Key Characteristics</div>
+                    <ul class="feature-list">
+                        <li>
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Preemptive</h4>
+                                <p>Can interrupt running processes when a higher priority process arrives</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Time-Sensitive</h4>
+                                <p>Prioritizes processes with the shortest remaining execution time</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="feature-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                                    <line x1="6" y1="1" x2="6" y2="4"></line>
+                                    <line x1="10" y1="1" x2="10" y2="4"></line>
+                                    <line x1="14" y1="1" x2="14" y2="4"></line>
+                                </svg>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Optimal Waiting Time</h4>
+                                <p>Minimizes average waiting time for a given set of processes</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2>How SRTN Works</h2>
+                <div class="underline"></div>
+            </div>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Process Arrival</h3>
+                        <p>When a process arrives, the system records its burst time (the time required for execution) and arrival time.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Process Selection</h3>
+                        <p>The scheduler selects the process with the shortest remaining execution time from the ready queue.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Preemption Check</h3>
+                        <p>When a new process arrives, the scheduler compares its burst time with the remaining time of the currently running process.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Context Switch</h3>
+                        <p>If the new process has a shorter burst time, the current process is preempted (paused) and the new process starts execution.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>Completion</h3>
+                        <p>When a process completes, the scheduler selects the next process with the shortest remaining time from the ready queue.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2>SRTN Features & Benefits</h2>
+                <div class="underline"></div>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h3>Minimizes Average Waiting Time</h3>
+                    <p>SRTN is proven to provide the minimum average waiting time among all scheduling algorithms for a given set of processes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </div>
+                    <h3>Responsive to Short Processes</h3>
+                    <p>Short processes are given priority, which improves system responsiveness for quick tasks.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </div>
+                    <h3>Efficient CPU Utilization</h3>
+                    <p>By prioritizing shorter tasks, SRTN ensures that the CPU is utilized efficiently, completing more processes in less time.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </div>
+                    <h3>Dynamic Priority Adjustment</h3>
+                    <p>Process priorities are continuously adjusted based on their remaining execution time, adapting to changing system conditions.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+                        </svg>
+                    </div>
+                    <h3>Reduced Turnaround Time</h3>
+                    <p>By completing shorter processes first, the average turnaround time (completion time - arrival time) is reduced.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                    <h3>Optimal for Interactive Systems</h3>
+                    <p>SRTN is well-suited for interactive systems where quick response time for short user requests is important.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real-world Applications Section -->
+<section id="comparison" class="comparison">
+    <div class="container">
+        <div class="section-header">
+            <h2>Real-world Applications of SRTN</h2>
+            <div class="underline"></div>
+        </div>
+        <div class="comparison-table-container">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Application Domain</th>
+                        <th>Implementation</th>
+                        <th>Benefits</th>
+                        <th>Challenges</th>
+                        <th>Performance Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlighted">
+                        <td><strong>Web Servers</strong></td>
+                        <td>Request handling prioritization</td>
+                        <td>Faster response for small requests</td>
+                        <td>Estimating request processing time</td>
+                        <td>Improved average response time</td>
+                    </tr>
+                    <tr>
+                        <td>Cloud Computing</td>
+                        <td>VM and container scheduling</td>
+                        <td>Efficient resource utilization</td>
+                        <td>Workload prediction accuracy</td>
+                        <td>Better throughput for small tasks</td>
+                    </tr>
+                    <tr>
+                        <td>Real-time Systems</td>
+                        <td>Task scheduling in embedded systems</td>
+                        <td>Meeting time constraints</td>
+                        <td>Overhead of preemption</td>
+                        <td>Reduced deadline misses</td>
+                    </tr>
+                    <tr>
+                        <td>Database Systems</td>
+                        <td>Query execution scheduling</td>
+                        <td>Faster results for simple queries</td>
+                        <td>Query execution time estimation</td>
+                        <td>Improved interactive performance</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile Operating Systems</td>
+                        <td>Application process scheduling</td>
+                        <td>Better UI responsiveness</td>
+                        <td>Battery consumption from context switches</td>
+                        <td>Enhanced user experience</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="comparison-notes">
+            <h3>Implementation Considerations</h3>
+            <div class="notes-grid">
+                <div class="note-card">
+                    <h4>Burst Time Estimation</h4>
+                    <p>
+                        In real-world systems, accurately estimating the remaining execution time is challenging. 
+                        Many implementations use historical data, statistical models, or machine learning techniques to predict process execution times.
+                    </p>
+                </div>
+                <div class="note-card">
+                    <h4>Hybrid Approaches</h4>
+                    <p>
+                        Practical systems often implement SRTN as part of a hybrid scheduling approach, combining it with other algorithms like Round Robin 
+                        to mitigate starvation issues while maintaining good average response times.
+                    </p>
+                </div>
+                <div class="note-card">
+                    <h4>Adaptive Scheduling</h4>
+                    <p>
+                        Modern implementations of SRTN often include adaptive mechanisms that adjust scheduling parameters based on system load, 
+                        resource availability, and performance metrics to optimize for different workload characteristics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Launch the SRTN Scheduling</h2>
+            <p>Experiment with our interactive SRTN Scheduler to see how different process configurations affect waiting time, turnaround time, and overall efficiency.</p>
+            <a href="index.html" class="cta-button">Open SRTN Scheduler</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon">
+                        <div class="cpu-icon">
+                            <div class="cpu-core"></div>
+                            <div class="cpu-pin"></div>
+                            <div class="cpu-pin"></div>
+                            <div class="cpu-pin"></div>
+                            <div class="cpu-pin"></div>
+                        </div>
+                    </div>
+                    <span>SRTN Scheduler</span>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h4>Navigation</h4>
+                        <ul>
+                            <li><a href="#about">About SRTN</a></li>
+                            <li><a href="#how-it-works">How It Works</a></li>
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#comparison">Comparison</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Labiaga, Roshele Faye<br>Carampatana, Jhyn<br>Tibur, Joemarie Jean<br>Honorio, Emmafe</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="homepage.js"></script>
+</body>
+</html>

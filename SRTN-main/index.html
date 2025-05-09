@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRTF Scheduler</title>
+    <link href="./style.css" rel="stylesheet">
+    
+</head>
+<<body>
+    <div class="container">
+        <div class="header-gradient shadow-md">
+            <h1 class="text-3xl font-bold text-center">Shortest Remaining Time Next (SRTN) Scheduler</h1>
+            <p class="text-center mt-2 opacity-90">CPU Scheduling Algorithm Visualization</p>
+        </div>
+        
+        <!-- Number of processes input -->
+        <div class="card">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Enter Number of Processes</h2>
+            <div class="flex items-center space-x-4">
+                <input type="number" id="process-count" min="1" max="10" value="5" class="input-field">
+                <button id="generate-table" class="button button-primary">Generate Table</button>
+            </div>
+            
+            <!-- Control buttons -->
+            <div class="control-buttons">
+                <button id="reset-btn" class="button button-danger">Reset All</button>
+            </div>
+        </div>
+        
+        <!-- Process details table -->
+        <div id="process-table-container" class="card">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Process Details</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr class="bg-indigo-50">
+                            <th class="border-b p-3 text-indigo-800">Process ID</th>
+                            <th class="border-b p-3 text-indigo-800">CPU Burst Time (msec)</th>
+                            <th class="border-b p-3 text-indigo-800">Arrival Time (msec)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="process-input-container">
+                        <!-- Process rows will be generated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button id="calculate-button" class="button button-success pulse-animation">Calculate</button>
+            </div>
+        </div>
+        
+        <!-- Action buttons - Fixed to be visible -->
+        <div id="action-buttons" class="card hidden">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Metrics & Results</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button id="gantt-chart-btn" class="action-btn purple">GANTT Chart</button>
+                <button id="waiting-time-btn" class="action-btn blue">Process Waiting Time</button>
+                <button id="avg-waiting-time-btn" class="action-btn blue">Average Waiting Time</button>
+                <button id="completion-time-btn" class="action-btn green">Process Completion Time</button>
+                <button id="avg-completion-time-btn" class="action-btn green">Average Completion Time</button>
+                <button id="turnaround-time-btn" class="action-btn yellow">Process Turn Around Time</button>
+                <button id="avg-turnaround-time-btn" class="action-btn yellow">Average Turn Around Time</button>
+            </div>
+        </div>
+        
+        <!-- Results display area -->
+        <div id="results-container" class="card hidden">
+            <h2 id="result-title" class="text-xl font-semibold mb-4 text-gray-800 pb-2 border-b border-gray-200">Results</h2>
+            <div id="result-content" class="overflow-x-auto">
+                <!-- Results will be shown here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const processCountInput = document.getElementById('process-count');
+            const generateTableBtn = document.getElementById('generate-table');
+            const processInputContainer = document.getElementById('process-input-container');
+            const calculateButton = document.getElementById('calculate-button');
+            const actionButtons = document.getElementById('action-buttons');
+            const resultsContainer = document.getElementById('results-container');
+            const resultTitle = document.getElementById('result-title');
+            const resultContent = document.getElementById('result-content');
+            
+            // New buttons
+            const resetBtn = document.getElementById('reset-btn');
+            
+            // Button elements
+            const ganttChartBtn = document.getElementById('gantt-chart-btn');
+            const waitingTimeBtn = document.getElementById('waiting-time-btn');
+            const avgWaitingTimeBtn = document.getElementById('avg-waiting-time-btn');
+            const completionTimeBtn = document.getElementById('completion-time-btn');
+            const avgCompletionTimeBtn = document.getElementById('avg-completion-time-btn');
+            const turnaroundTimeBtn = document.getElementById('turnaround-time-btn');
+            const avgTurnaroundTimeBtn = document.getElementById('avg-turnaround-time-btn');
+            
+            // Global variables
+            let processData = [];
+            let ganttChartData = [];
+            let firstResponseTime = {}; // Store first response time for each process
+            
+            // Hide the action buttons on initial load
+            actionButtons.classList.add('hidden');
+            
+            // Generate table based on number of processes
+            generateTableBtn.addEventListener('click', function() {
+                const count = parseInt(processCountInput.value);
+                if (count < 1 || count > 10) {
+                    showNotification('Please enter a number between 1 and 10', 'error');
+                    return;
+                }
+                
+                generateProcessTable(count);
+                showNotification('Process table generated successfully!', 'success');
+            });
+            
+            // Calculate button event
+            calculateButton.addEventListener('click', function() {
+                if (validateInputs()) {
+                    processData = collectProcessData();
+                    runSRTFAlgorithm();
+                    actionButtons.classList.remove('hidden');
+                    resultsContainer.classList.add('hidden');
+
+                    // Smooth scroll to Metrics & Results section
+                    actionButtons.scrollIntoView({ behavior: 'smooth' });
+                    
+                    // Add animation to metrics buttons
+                    animateMetricsButtons();
+                    
+                    showNotification('Calculation completed!', 'success');
+                }
+            });
+            
+            // Reset button event
+            resetBtn.addEventListener('click', function() {
+                // Reset process count
+                processCountInput.value = 5;
+                
+                // Clear process table
+                generateProcessTable(5);
+                
+                // Clear results and hide sections
+                processData = [];
+                ganttChartData = [];
+                firstResponseTime = {};
+                actionButtons.classList.add('hidden');
+                resultsContainer.classList.add('hidden');
+                
+                showNotification('All data has been reset', 'info');
+            });
+            
+            // Action button events
+            ganttChartBtn.addEventListener('click', showGanttChart);
+            waitingTimeBtn.addEventListener('click', showWaitingTime);
+            avgWaitingTimeBtn.addEventListener('click', showAvgWaitingTime);
+            completionTimeBtn.addEventListener('click', showCompletionTime);
+            avgCompletionTimeBtn.addEventListener('click', showAvgCompletionTime);
+            turnaroundTimeBtn.addEventListener('click', showTurnaroundTime);
+            avgTurnaroundTimeBtn.addEventListener('click', showAvgTurnaroundTime);
+            
+            // Generate process input table
+            function generateProcessTable(count) {
+                processInputContainer.innerHTML = '';
+                
+                for (let i = 0; i < count; i++) {
+                    const row = document.createElement('tr');
+                    row.className = 'table-row-alt hover:bg-gray-50 transition-colors';
+                    
+                    // Process ID cell
+                    const pidCell = document.createElement('td');
+                    pidCell.className = 'border-b p-3';
+                    pidCell.textContent = `P${i+1}`;
+                    
+                    // CPU Burst Time cell
+                    const burstCell = document.createElement('td');
+                    burstCell.className = 'border-b p-3';
+                    const burstInput = document.createElement('input');
+                    burstInput.type = 'number';
+                    burstInput.min = '0.1';
+                    burstInput.step = '0.1';
+                    burstInput.className = 'input-field w-full p-2 border rounded burst-time';
+                    burstInput.setAttribute('data-pid', `P${i+1}`);
+                    burstInput.setAttribute('placeholder', 'msec');
+                    burstCell.appendChild(burstInput);
+                    
+                    // Arrival Time cell
+                    const arrivalCell = document.createElement('td');
+                    arrivalCell.className = 'border-b p-3';
+                    const arrivalInput = document.createElement('input');
+                    arrivalInput.type = 'number';
+                    arrivalInput.min = '0';
+                    arrivalInput.step = '0.1';
+                    arrivalInput.className = 'input-field w-full p-2 border rounded arrival-time';
+                    arrivalInput.setAttribute('data-pid', `P${i+1}`);
+                    arrivalInput.setAttribute('placeholder', 'msec');
+                    arrivalCell.appendChild(arrivalInput);
+                    
+                    row.appendChild(pidCell);
+                    row.appendChild(burstCell);
+                    row.appendChild(arrivalCell);
+                    
+                    // Add with fade-in animation
+                    row.style.opacity = '0';
+                    processInputContainer.appendChild(row);
+                    
+                    // Trigger animation
+                    setTimeout(() => {
+                        row.style.transition = 'opacity 0.3s ease';
+                        row.style.opacity = '1';
+                    }, i * 50);
+                }
+            }
+            
+            // Validate that all inputs are filled
+            function validateInputs() {
+                const burstInputs = document.querySelectorAll('.burst-time');
+                const arrivalInputs = document.querySelectorAll('.arrival-time');
+                
+                for (let input of burstInputs) {
+                    if (!input.value || parseFloat(input.value) <= 0) {
+                        showNotification('Please fill all CPU burst times with positive values', 'error');
+                        input.classList.add('error-input');
+                        setTimeout(() => input.classList.remove('error-input'), 2000);
+                        return false;
+                    }
+                }
+                
+                for (let input of arrivalInputs) {
+                    if (!input.value || parseFloat(input.value) < 0) {
+                        showNotification('Please fill all arrival times with non-negative values', 'error');
+                        input.classList.add('error-input');
+                        setTimeout(() => input.classList.remove('error-input'), 2000);
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            
+            // Collect process data from form
+            function collectProcessData() {
+                const data = [];
+                const rows = processInputContainer.querySelectorAll('tr');
+                
+                rows.forEach((row, index) => {
+                    const pid = `P${index+1}`;
+                    const burstTime = parseFloat(row.querySelector('.burst-time').value);
+                    const arrivalTime = parseFloat(row.querySelector('.arrival-time').value);
+                    
+                    data.push({
+                        pid: pid,
+                        burstTime: burstTime,
+                        arrivalTime: arrivalTime,
+                        remainingTime: burstTime,
+                        completionTime: 0,
+                        turnaroundTime: 0,
+                        waitingTime: 0,
+                        responseTime: -1 // -1 indicates not started yet
+                    });
+                });
+                
+                return data;
+            }
+            
+            // Run SRTF algorithm
+            function runSRTFAlgorithm() {
+                const processes = JSON.parse(JSON.stringify(processData)); // Deep copy
+                let currentTime = 0;
+                let completedProcesses = 0;
+                ganttChartData = [];
+                firstResponseTime = {}; // Reset response time tracking
+                let prevProcess = null;
+                
+                // Sort processes by arrival time initially
+                processes.sort((a, b) => a.arrivalTime - b.arrivalTime);
+                
+                // Find the time of the earliest arrival
+                if (processes.length > 0) {
+                    currentTime = processes[0].arrivalTime;
+                }
+                
+                // Time quantum for simulation (smaller for more precision with decimals)
+                const timeQuantum = 0.1;
+                
+                // Continue until all processes are completed
+                while (completedProcesses < processes.length) {
+                    // Find the process with shortest remaining time among arrived processes
+                    let shortestIndex = -1;
+                    let shortestTime = Number.MAX_VALUE;
+                    
+                    for (let i = 0; i < processes.length; i++) {
+                        if (processes[i].arrivalTime <= currentTime && processes[i].remainingTime > 0) {
+                            if (processes[i].remainingTime < shortestTime) {
+                                shortestTime = processes[i].remainingTime;
+                                shortestIndex = i;
+                            }
+                        }
+                    }
+                    
+                    // If no process is found, increment time
+                    if (shortestIndex === -1) {
+                        currentTime += timeQuantum;
+                        continue;
+                    }
+                    
+                    // Add to Gantt chart if process changes
+                    if (prevProcess !== processes[shortestIndex].pid) {
+                        if (ganttChartData.length > 0) {
+                            ganttChartData[ganttChartData.length - 1].endTime = currentTime;
+                        }
+                        
+                        ganttChartData.push({
+                            pid: processes[shortestIndex].pid,
+                            startTime: currentTime,
+                            endTime: -1 // Will be updated later
+                        });
+                        
+                        prevProcess = processes[shortestIndex].pid;
+                    }
+                    
+                    // Record first response time if not already recorded
+                    if (processes[shortestIndex].responseTime === -1) {
+                        processes[shortestIndex].responseTime = currentTime - processes[shortestIndex].arrivalTime;
+                        firstResponseTime[processes[shortestIndex].pid] = processes[shortestIndex].responseTime;
+                    }
+                    
+                    // Decrement remaining time of selected process
+                    const timeToReduce = Math.min(timeQuantum, processes[shortestIndex].remainingTime);
+                    processes[shortestIndex].remainingTime -= timeToReduce;
+                    currentTime += timeToReduce;
+                    
+                    // Fix floating point precision issues
+                    processes[shortestIndex].remainingTime = parseFloat(processes[shortestIndex].remainingTime.toFixed(1));
+                    currentTime = parseFloat(currentTime.toFixed(1));
+                    
+                    // If process completes
+                    if (processes[shortestIndex].remainingTime <= 0) {
+                        completedProcesses++;
+                        processes[shortestIndex].completionTime = currentTime;
+                        processes[shortestIndex].turnaroundTime = 
+                            processes[shortestIndex].completionTime - processes[shortestIndex].arrivalTime;
+                        processes[shortestIndex].waitingTime = 
+                            processes[shortestIndex].turnaroundTime - processes[shortestIndex].burstTime;
+                    }
+                }
+                
+                // Update the last Gantt chart end time
+                if (ganttChartData.length > 0) {
+                    ganttChartData[ganttChartData.length - 1].endTime = currentTime;
+                }
+                
+                // Update process data with calculated values including response time
+                for (let i = 0; i < processData.length; i++) {
+                    const matchingProcess = processes.find(p => p.pid === processData[i].pid);
+                    processData[i].completionTime = matchingProcess.completionTime;
+                    processData[i].turnaroundTime = matchingProcess.turnaroundTime;
+                    processData[i].waitingTime = matchingProcess.waitingTime;
+                    processData[i].responseTime = matchingProcess.responseTime;
+                }
+            }
+            
+            // Improved Gantt chart rendering with animations and Show Process button
+            function renderGanttChart() {
+                // Calculate total execution time to determine if we need scaling
+                const totalExecutionTime = ganttChartData.length > 0 ? 
+                    ganttChartData[ganttChartData.length - 1].endTime - ganttChartData[0].startTime : 0;
+                
+                // Determine scaling factor based on total execution time
+                // Reduce the scale factor as the timeline gets longer
+                let scaleFactor = 30; // default scale factor
+                if (totalExecutionTime > 50) {
+                    scaleFactor = 15;
+                } else if (totalExecutionTime > 30) {
+                    scaleFactor = 20;
+                } else if (totalExecutionTime > 20) {
+                    scaleFactor = 25;
+                }
+                
+                let html = `
+                    <div class="gantt-container">
+                        <h3 class="text-lg font-semibold mb-4 text-center text-gray-800">Process Execution Timeline</h3>
+                        <div class="process-pool-container">
+                            <h4 class="text-md font-semibold mb-2 text-gray-700">Process Pool</h4>
+                            <div class="animation-status" id="animation-status"></div>
+                            <div class="process-pool">`;
+                
+                // Create process pool with all processes
+                processData.forEach(process => {
+                    const processNumber = parseInt(process.pid.substring(1));
+                    html += `
+        <div class="process-icon bg-process-${processNumber}" data-pid="${process.pid}">
+            ${process.pid}
+            <div class="process-info">
+                Burst: ${formatNumber(process.burstTime)} | Arrival: ${formatNumber(process.arrivalTime)}
+            </div>
+        </div>`;
+                });
+                
+                html += `
+                            </div>
+                            <div class="animation-status" id="animation-status"></div>
+                            <div class="animation-controls">
+                                <div class="animation-buttons">
+                                    <button id="show-process-btn" class="button button-primary">Autoplay</button>
+                                    <button id="reset-animation-btn" class="button button-danger hidden">Reset Animation</button>
+                                </div>
+                                <div id="manual-controls" class="manual-controls">
+                                    <button id="prev-step-btn" class="button button-secondary" disabled>Previous Step</button>
+                                    <button id="next-step-btn" class="button button-secondary">Next Step</button>
+                                </div>
+                                <div class="animation-speed-control">
+                                    <label for="animation-speed">Speed:</label>
+                                    <input type="range" id="animation-speed" class="speed-slider" min="0.5" max="2" step="0.1" value="1">
+                                    <span id="speed-value">1x</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto" style="max-width: 100%;">
+                            <div class="gantt-chart relative" style="min-width: max-content; padding: 0 20px;">
+                `;
+
+                ganttChartData.forEach((item, index) => {
+                    const width = (item.endTime - item.startTime) * scaleFactor; // dynamic scale factor
+                    const processNumber = parseInt(item.pid.substring(1));
+
+                    html += `
+                        <div class="gantt-block-container" style="display: inline-block; text-align: center;">
+                            <div class="process-block bg-process-${processNumber} animate-in" 
+                                data-pid="${item.pid}" data-index="${index}"
+                                style="width: ${width}px; border: 2px solid #333; border-right: ${index === ganttChartData.length - 1 ? '2px' : '1px'} solid #333;">
+                                ${item.pid}
+                            </div>
+                            <div class="time-label" style="width: ${width}px;">${formatNumber(item.startTime)}</div>
+                        </div>
+                    `;
+
+                    // Add the final end time label only at the end
+                    if (index === ganttChartData.length - 1) {
+                        html += `
+                            <div style="text-align: center;">
+                                <div style="width: 0;"></div>
+                                <div class="time-label">${formatNumber(item.endTime)}</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                html += `</div></div>`;
+                
+                html += `</div>`;
+                return html;
+            }
+            
+            // Show Gantt Chart
+            function showGanttChart() {
+                resultTitle.textContent = 'GANTT Chart';
+                resultContent.innerHTML = renderGanttChart();
+                resultsContainer.classList.remove('hidden');
+                
+                // Add animation to Gantt chart blocks
+                setTimeout(() => {
+                    const blocks = document.querySelectorAll('.process-block');
+                    blocks.forEach((block, index) => {
+                        setTimeout(() => {
+                            block.classList.add('animate-complete');
+                        }, index * 100);
+                    });
+                }, 100);
+                
+                // Add event listeners for animation buttons
+                const showProcessBtn = document.getElementById('show-process-btn');
+                const resetAnimationBtn = document.getElementById('reset-animation-btn');
+                
+                if (showProcessBtn) {
+                    showProcessBtn.addEventListener('click', animateProcessesToGantt);
+                }
+                
+                // Initialize manual animation
+                setupManualAnimation();
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Manual animation functionality
+            function setupManualAnimation() {
+                const processIcons = document.querySelectorAll('.process-icon');
+                const ganttBlocks = document.querySelectorAll('.process-block');
+                const statusElement = document.getElementById('animation-status');
+                const manualControls = document.getElementById('manual-controls');
+                const prevStepBtn = document.getElementById('prev-step-btn');
+                const nextStepBtn = document.getElementById('next-step-btn');
+                const showProcessBtn = document.getElementById('show-process-btn');
+                const resetAnimationBtn = document.getElementById('reset-animation-btn');
+                const speedSlider = document.getElementById('animation-speed');
+                const speedValue = document.getElementById('speed-value');
+                
+                // Update speed value display when slider changes
+                if (speedSlider) {
+                    speedSlider.addEventListener('input', function() {
+                        speedValue.textContent = `${speedSlider.value}x`;
+                    });
+                }
+                
+                // Create animation sequence from ganttChartData
+                const animationSequence = [];
+                
+                // Process the ganttChartData to create a sequence of animation steps
+                ganttChartData.forEach((item, index) => {
+                    const block = document.querySelector(`.process-block[data-pid="${item.pid}"][data-index="${index}"]`);
+                    if (block) {
+                        animationSequence.push({
+                            pid: item.pid,
+                            block: block,
+                            startTime: item.startTime,
+                            endTime: item.endTime,
+                            duration: item.endTime - item.startTime
+                        });
+                    }
+                });
+                
+                // Sort sequence by start time
+                animationSequence.sort((a, b) => a.startTime - b.startTime);
+                
+                // Initialize manual controls
+                let currentStep = -1;
+                let activeElements = [];
+                
+                // Initialize status
+                statusElement.textContent = 'Use "Next Step" to move through the animation';
+                
+                // Set up initial state
+                currentStep = -1;
+                updateButtonStates();
+                
+                // Previous step button
+                prevStepBtn.addEventListener('click', function() {
+                    if (currentStep > 0) {
+                        // Remove current step visualization
+                        clearActiveElements();
+                        
+                        // Go to previous step
+                        currentStep--;
+                        showStep(currentStep);
+                        updateButtonStates();
+                    }
+                });
+                
+                // Next step button
+                nextStepBtn.addEventListener('click', function() {
+                    if (currentStep < animationSequence.length - 1) {
+                        // Clear previous visualization
+                        clearActiveElements();
+                        
+                        // Go to next step
+                        currentStep++;
+                        showStep(currentStep);
+                        updateButtonStates();
+                    }
+                });
+                
+                // Update button states based on current step
+                function updateButtonStates() {
+                    prevStepBtn.disabled = currentStep <= 0;
+                    nextStepBtn.disabled = currentStep >= animationSequence.length - 1;
+                }
+                
+                // Clear active elements
+                function clearActiveElements() {
+                    // Remove any active elements
+                    activeElements.forEach(el => {
+                        if (el && el.parentNode) {
+                            el.remove();
+                        }
+                    });
+                    activeElements = [];
+                    
+                    // Reset block highlights
+                    ganttBlocks.forEach(block => {
+                        block.classList.remove('highlight-target', 'flash-animation');
+                    });
+                    
+                    // Reset process icons
+                    processIcons.forEach(icon => {
+                        icon.style.opacity = '1';
+                        icon.style.transform = 'scale(1)';
+                    });
+                }
+                
+                // Show a specific step
+                function showStep(stepIndex) {
+                    if (stepIndex < 0 || stepIndex >= animationSequence.length) return;
+                    
+                    const step = animationSequence[stepIndex];
+                    const pid = step.pid;
+                    const processIcon = document.querySelector(`.process-icon[data-pid="${pid}"]`);
+                    const block = step.block;
+                    
+                    if (!processIcon || !block) return;
+                    
+                    // Update status
+                    statusElement.textContent = `Step ${stepIndex + 1}/${animationSequence.length}: Processing ${pid} at time ${step.startTime}`;
+                    
+                    // Show which process is currently being scheduled
+                    processIcons.forEach(icon => {
+                        icon.style.opacity = icon.dataset.pid === pid ? '1' : '0.5';
+                        icon.style.transform = icon.dataset.pid === pid ? 'scale(1.1)' : 'scale(1)';
+                    });
+                    
+                    // Highlight target block
+                    block.classList.add('highlight-target');
+                    
+                    // Flash effect on the block
+                    block.classList.add('flash-animation');
+                }
+                
+                // Reset animation state
+                function resetAnimation() {
+                    clearActiveElements();
+                    
+                    // Clear any remaining animations
+                    document.querySelectorAll('.process-dragging, .process-trace, .process-path').forEach(el => el.remove());
+                    
+                    // Reset process icons
+                    processIcons.forEach(icon => {
+                        icon.style.opacity = '1';
+                        icon.style.transform = 'scale(1)';
+                    });
+                    
+                    // Reset blocks
+                    ganttBlocks.forEach(block => {
+                        block.classList.remove('highlight-target', 'flash-animation');
+                    });
+                    
+                    // Reset controls visibility
+                    manualControls.classList.remove('hidden');
+                    showProcessBtn.classList.remove('hidden');
+                    resetAnimationBtn.classList.add('hidden');
+                    
+                    // Clear status
+                    statusElement.textContent = '';
+                }
+                
+                // Add reset button functionality
+                resetAnimationBtn.addEventListener('click', function() {
+                    resetAnimation();
+                    
+                    // Reset controls visibility
+                    manualControls.classList.remove('hidden');
+                    showProcessBtn.classList.remove('hidden');
+                    resetAnimationBtn.classList.add('hidden');
+                    
+                    // Clear status
+                    statusElement.textContent = '';
+                });
+            }
+            
+            // Animate processes to Gantt chart
+            function animateProcessesToGantt() {
+                const processIcons = document.querySelectorAll('.process-icon');
+                const ganttBlocks = document.querySelectorAll('.process-block');
+                const statusElement = document.getElementById('animation-status');
+                
+                // Disable the buttons during animation
+                const showProcessBtn = document.getElementById('show-process-btn');
+                const resetAnimationBtn = document.getElementById('reset-animation-btn');
+                const manualControls = document.getElementById('manual-controls');
+                const speedSlider = document.getElementById('animation-speed');
+                
+                showProcessBtn.classList.add('hidden');
+                manualControls.classList.add('hidden');
+                resetAnimationBtn.classList.remove('hidden');
+                
+                // Reset any existing animations
+                document.querySelectorAll('.process-dragging, .process-trace, .process-path').forEach(el => el.remove());
+                
+                // Reset process icons
+                processIcons.forEach(icon => {
+                    icon.style.opacity = '1';
+                    icon.style.transform = 'scale(1)';
+                });
+                
+                // Reset blocks
+                ganttBlocks.forEach(block => {
+                    block.classList.remove('highlight-target', 'flash-animation');
+                });
+                
+                // Create animation sequence from ganttChartData
+                const animationSequence = [];
+                
+                // Process the ganttChartData to create a sequence of animation steps
+                ganttChartData.forEach((item, index) => {
+                    const block = document.querySelector(`.process-block[data-pid="${item.pid}"][data-index="${index}"]`);
+                    if (block) {
+                        animationSequence.push({
+                            pid: item.pid,
+                            block: block,
+                            startTime: item.startTime,
+                            endTime: item.endTime,
+                            duration: item.endTime - item.startTime
+                        });
+                    }
+                });
+                
+                // Sort sequence by start time
+                animationSequence.sort((a, b) => a.startTime - b.startTime);
+                
+                // Animate each step
+                animateStep(0);
+                
+                function animateStep(stepIndex) {
+                    if (stepIndex >= animationSequence.length) {
+                        statusElement.textContent = 'Animation complete!';
+                        
+                        // Re-enable the buttons after animation
+                        showProcessBtn.classList.remove('hidden');
+                        manualControls.classList.remove('hidden');
+                        resetAnimationBtn.classList.add('hidden');
+                        return;
+                    }
+                    
+                    const step = animationSequence[stepIndex];
+                    const pid = step.pid;
+                    const processIcon = document.querySelector(`.process-icon[data-pid="${pid}"]`);
+                    const block = step.block;
+                    
+                    if (!processIcon || !block) return;
+                    
+                    // Update status
+                    statusElement.textContent = `Processing ${pid} at time ${step.startTime}`;
+                    
+                    // Show which process is currently being scheduled
+                    processIcons.forEach(icon => {
+                        icon.style.opacity = icon.dataset.pid === pid ? '1' : '0.5';
+                        icon.style.transform = icon.dataset.pid === pid ? 'scale(1.1)' : 'scale(1)';
+                    });
+                    
+                    // Highlight target block
+                    block.classList.add('highlight-target');
+                    
+                    // Flash effect on the block
+                    block.classList.add('flash-animation');
+                    
+                    // Animate
+                    setTimeout(() => {
+                        block.classList.remove('highlight-target', 'flash-animation');
+                        
+                        // Continue to the next step
+                        const animationSpeed = speedSlider.value;
+                        setTimeout(() => {
+                            animateStep(stepIndex + 1);
+                        }, 1000 / animationSpeed);
+                    }, 1000 / animationSpeed);
+                }
+            }
+            
+            // Show Process Waiting Time with enhanced UI and animation
+            function showWaitingTime() {
+                resultTitle.textContent = 'Process Waiting Time';
+                
+                // Create solution button
+                let html = `
+                <div class="flex justify-end mb-4">
+                    <button id="waiting-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                <table class="enhanced-table">
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>Waiting Time (msec)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                processData.forEach((process, index) => {
+                    html += `
+                        <tr>
+                            <td class="table-cell-animated" style="animation-delay: ${index * 100}ms">
+                                <div class="flex items-center">
+                                    <div class="process-icon bg-process-${parseInt(process.pid.substring(1))}" 
+                                        style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 10px;">
+                                        ${process.pid}
+                                    </div>
+                                    ${process.pid}
+                                </div>
+                            </td>
+                            <td class="table-cell-animated" style="animation-delay: ${(index * 100) + 50}ms">
+                                <span class="font-semibold">${formatNumber(process.waitingTime)}</span>
+                            </td>
+                        </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                
+                // Add solution container (hidden initially)
+                html += `
+                <div id="waiting-time-solution" class="solution-container mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Process Waiting Time</h3>
+                    <p class="mb-2">Waiting Time is calculated as:</p>
+                    <div class="formula">Waiting Time = Turnaround Time - Burst Time</div>
+                    <p class="mb-2">For each process:</p>
+                    <div id="waiting-time-steps"></div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('waiting-time-solution-btn');
+                const solutionContainer = document.getElementById('waiting-time-solution');
+                const stepsContainer = document.getElementById('waiting-time-steps');
+                
+                if (solutionBtn && solutionContainer && stepsContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        
+                        // Generate solution steps
+                        let stepsHtml = '';
+                        processData.forEach((process, index) => {
+                            stepsHtml += `
+                                <div class="solution-step mb-2" style="animation-delay: ${index * 200}ms">
+                                    <strong>${process.pid}:</strong> Waiting Time = Turnaround Time - Burst Time = 
+                                    ${formatNumber(process.turnaroundTime)} - ${formatNumber(process.burstTime)} = 
+                                    <span class="font-bold">${formatNumber(process.waitingTime)}</span>
+                                </div>`;
+                        });
+                        
+                        stepsContainer.innerHTML = stepsHtml;
+                        
+                        // Animate solution steps
+                        setTimeout(() => {
+                            const steps = document.querySelectorAll('.solution-step');
+                            steps.forEach((step, i) => {
+                                setTimeout(() => {
+                                    step.classList.add('animate-solution');
+                                }, i * 200);
+                            });
+                        }, 100);
+                        
+                        // Change button text
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Show Average Waiting Time with enhanced UI and animation
+            function showAvgWaitingTime() {
+                resultTitle.textContent = 'Average Waiting Time';
+                
+                let totalWaitingTime = 0;
+                processData.forEach(process => {
+                    totalWaitingTime += process.waitingTime;
+                });
+                const avgWaitingTime = totalWaitingTime / processData.length;
+                
+                // Create solution button and enhanced metric card
+                let html = `
+                <div class="flex justify-end mb-4">
+                    <button id="avg-waiting-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">⏱️</div>
+                    <div class="metric-label-enhanced">Average Waiting Time</div>
+                    <div class="metric-value-enhanced">${formatNumber(avgWaitingTime)}</div>
+                    <div class="metric-unit-enhanced">milliseconds</div>
+                    <div class="metric-detail">
+                        Based on ${processData.length} processes with a total waiting time of ${formatNumber(totalWaitingTime)} msec
+                    </div>
+                </div>
+                
+                <div id="avg-waiting-time-solution" class="solution-container-enhanced mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Average Waiting Time</h3>
+                    <p class="mb-2">Average Waiting Time is calculated as:</p>
+                    <div class="formula">Average Waiting Time = Sum of all Process Waiting Times / Number of Processes</div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 1:</strong> Find the waiting time for each process
+                        <ul class="ml-6 list-disc">
+                            ${processData.map(p => `<li>${p.pid}: ${formatNumber(p.waitingTime)} msec</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 2:</strong> Calculate the sum of all waiting times
+                        <div class="formula">
+                            ${processData.map(p => formatNumber(p.waitingTime)).join(' + ')} = ${formatNumber(totalWaitingTime)} msec
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Step 3:</strong> Divide by the number of processes
+                        <div class="formula">
+                            ${formatNumber(totalWaitingTime)} / ${processData.length} = ${formatNumber(avgWaitingTime)} msec
+                        </div>
+                    </div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('avg-waiting-time-solution-btn');
+                const solutionContainer = document.getElementById('avg-waiting-time-solution');
+                
+                if (solutionBtn && solutionContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                        
+                        // Animate solution container
+                        solutionContainer.classList.add('result-card');
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Show Process Completion Time with enhanced UI and animation
+            function showCompletionTime() {
+                resultTitle.textContent = 'Process Completion Time';
+                
+                // First show the Gantt chart for reference (without process pool)
+                let html = `
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold mb-2 text-center">Gantt Chart Reference</h3>
+                    <div class="gantt-container">
+                        <div class="overflow-x-auto" style="max-width: 100%;">
+                            <div class="gantt-chart relative" style="min-width: max-content; padding: 0 20px;">`;
+                
+                // Calculate total execution time to determine if we need scaling
+                const totalExecutionTime = ganttChartData.length > 0 ? 
+                    ganttChartData[ganttChartData.length - 1].endTime - ganttChartData[0].startTime : 0;
+                
+                // Determine scaling factor based on total execution time
+                let scaleFactor = 30; // default scale factor
+                if (totalExecutionTime > 50) {
+                    scaleFactor = 15;
+                } else if (totalExecutionTime > 30) {
+                    scaleFactor = 20;
+                } else if (totalExecutionTime > 20) {
+                    scaleFactor = 25;
+                }
+                
+                ganttChartData.forEach((item, index) => {
+                    const width = (item.endTime - item.startTime) * scaleFactor;
+                    const processNumber = parseInt(item.pid.substring(1));
+                    
+                    html += `
+                        <div class="gantt-block-container" style="display: inline-block; text-align: center;">
+                            <div class="process-block bg-process-${processNumber} animate-in" 
+                                data-pid="${item.pid}" data-index="${index}"
+                                style="width: ${width}px; border: 2px solid #333; border-right: ${index === ganttChartData.length - 1 ? '2px' : '1px'} solid #333;">
+                                ${item.pid}
+                            </div>
+                            <div class="time-label" style="width: ${width}px;">${formatNumber(item.startTime)}</div>
+                        </div>`;
+                    
+                    if (index === ganttChartData.length - 1) {
+                        html += `
+                            <div style="text-align: center;">
+                                <div style="width: 0;"></div>
+                                <div class="time-label">${formatNumber(item.endTime)}</div>
+                            </div>`;
+                    }
+                });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end mb-4">
+                    <button id="completion-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                
+                <table class="enhanced-table">
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>Completion Time (msec)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                processData.forEach((process, index) => {
+                    html += `
+                        <tr>
+                            <td class="table-cell-animated" style="animation-delay: ${index * 100}ms">
+                                <div class="flex items-center">
+                                    <div class="process-icon bg-process-${parseInt(process.pid.substring(1))}" 
+                                        style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 10px;">
+                                        ${process.pid}
+                                    </div>
+                                    ${process.pid}
+                                </div>
+                            </td>
+                            <td class="table-cell-animated" style="animation-delay: ${(index * 100) + 50}ms">
+                                <span class="font-semibold">${formatNumber(process.completionTime)}</span>
+                            </td>
+                        </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                
+                // Add solution container (hidden initially)
+                html += `
+                <div id="completion-time-solution" class="solution-container mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Process Completion Time</h3>
+                    <p class="mb-2">Completion Time is the time at which a process completes its execution.</p>
+                    <p class="mb-2">From the Gantt chart, we can see when each process finishes:</p>
+                    <div id="completion-time-steps"></div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add animation to Gantt chart blocks
+                setTimeout(() => {
+                    const blocks = document.querySelectorAll('.process-block');
+                    blocks.forEach((block, index) => {
+                        setTimeout(() => {
+                            block.classList.add('animate-complete');
+                        }, index * 100);
+                    });
+                }, 100);
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('completion-time-solution-btn');
+                const solutionContainer = document.getElementById('completion-time-solution');
+                const stepsContainer = document.getElementById('completion-time-steps');
+                
+                if (solutionBtn && solutionContainer && stepsContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        
+                        // Generate solution steps
+                        let stepsHtml = '';
+                        processData.forEach((process, index) => {
+                            // Find the last occurrence of this process in the Gantt chart
+                            const lastOccurrence = [...ganttChartData].reverse().find(item => item.pid === process.pid);
+                            
+                            stepsHtml += `
+                                <div class="solution-step mb-2" style="animation-delay: ${index * 200}ms">
+                                    <strong>${process.pid}:</strong> Completes at time 
+                                    <span class="font-bold">${formatNumber(process.completionTime)}</span>
+                                    ${lastOccurrence ? ` (as shown in the Gantt chart at time ${formatNumber(lastOccurrence.endTime)})` : ''}
+                                </div>`;
+                        });
+                        
+                        stepsContainer.innerHTML = stepsHtml;
+                        
+                        // Animate solution steps
+                        setTimeout(() => {
+                            const steps = document.querySelectorAll('.solution-step');
+                            steps.forEach((step, i) => {
+                                setTimeout(() => {
+                                    step.classList.add('animate-solution');
+                                }, i * 200);
+                            });
+                        }, 100);
+                        
+                        // Change button text
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Show Average Completion Time with enhanced UI and animation
+            function showAvgCompletionTime() {
+                resultTitle.textContent = 'Average Completion Time';
+                
+                let totalCompletionTime = 0;
+                processData.forEach(process => {
+                    totalCompletionTime += process.completionTime;
+                });
+                const avgCompletionTime = totalCompletionTime / processData.length;
+                
+                // Create solution button and enhanced metric card
+                let html = `
+                <div class="flex justify-end mb-4">
+                    <button id="avg-completion-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">🏁</div>
+                    <div class="metric-label-enhanced">Average Completion Time</div>
+                    <div class="metric-value-enhanced">${formatNumber(avgCompletionTime)}</div>
+                    <div class="metric-unit-enhanced">milliseconds</div>
+                    <div class="metric-detail">
+                        Based on ${processData.length} processes with a total completion time of ${formatNumber(totalCompletionTime)} msec
+                    </div>
+                </div>
+                
+                <div id="avg-completion-time-solution" class="solution-container-enhanced mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Average Completion Time</h3>
+                    <p class="mb-2">Average Completion Time is calculated as:</p>
+                    <div class="formula">Average Completion Time = Sum of all Process Completion Times / Number of Processes</div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 1:</strong> Find the completion time for each process
+                        <ul class="ml-6 list-disc">
+                            ${processData.map(p => `<li>${p.pid}: ${formatNumber(p.completionTime)} msec</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 2:</strong> Calculate the sum of all completion times
+                        <div class="formula">
+                            ${processData.map(p => formatNumber(p.completionTime)).join(' + ')} = ${formatNumber(totalCompletionTime)} msec
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Step 3:</strong> Divide by the number of processes
+                        <div class="formula">
+                            ${formatNumber(totalCompletionTime)} / ${processData.length} = ${formatNumber(avgCompletionTime)} msec
+                        </div>
+                    </div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('avg-completion-time-solution-btn');
+                const solutionContainer = document.getElementById('avg-completion-time-solution');
+                
+                if (solutionBtn && solutionContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                        
+                        // Animate solution container
+                        solutionContainer.classList.add('result-card');
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Show Process Turn Around Time with enhanced UI and animation
+            function showTurnaroundTime() {
+                resultTitle.textContent = 'Process Turn Around Time';
+                
+                // Create solution button
+                let html = `
+                <div class="flex justify-end mb-4">
+                    <button id="turnaround-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                <table class="enhanced-table">
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>Turn Around Time (msec)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+                
+                processData.forEach((process, index) => {
+                    html += `
+                        <tr>
+                            <td class="table-cell-animated" style="animation-delay: ${index * 100}ms">
+                                <div class="flex items-center">
+                                    <div class="process-icon bg-process-${parseInt(process.pid.substring(1))}" 
+                                        style="width: 30px; height: 30px; font-size: 0.8rem; margin-right: 10px;">
+                                        ${process.pid}
+                                    </div>
+                                    ${process.pid}
+                                </div>
+                            </td>
+                            <td class="table-cell-animated" style="animation-delay: ${(index * 100) + 50}ms">
+                                <span class="font-semibold">${formatNumber(process.turnaroundTime)}</span>
+                            </td>
+                        </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                
+                // Add solution container (hidden initially)
+                html += `
+                <div id="turnaround-time-solution" class="solution-container mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Process Turn Around Time</h3>
+                    <p class="mb-2">Turn Around Time is calculated as:</p>
+                    <div class="formula">Turn Around Time = Completion Time - Arrival Time</div>
+                    <p class="mb-2">For each process:</p>
+                    <div id="turnaround-time-steps"></div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('turnaround-time-solution-btn');
+                const solutionContainer = document.getElementById('turnaround-time-solution');
+                const stepsContainer = document.getElementById('turnaround-time-steps');
+                
+                if (solutionBtn && solutionContainer && stepsContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        
+                        // Generate solution steps
+                        let stepsHtml = '';
+                        processData.forEach((process, index) => {
+                            stepsHtml += `
+                                <div class="solution-step mb-2" style="animation-delay: ${index * 200}ms">
+                                    <strong>${process.pid}:</strong> Turn Around Time = Completion Time - Arrival Time = 
+                                    ${formatNumber(process.completionTime)} - ${formatNumber(process.arrivalTime)} = 
+                                    <span class="font-bold">${formatNumber(process.turnaroundTime)}</span>
+                                </div>`;
+                        });
+                        
+                        stepsContainer.innerHTML = stepsHtml;
+                        
+                        // Animate solution steps
+                        setTimeout(() => {
+                            const steps = document.querySelectorAll('.solution-step');
+                            steps.forEach((step, i) => {
+                                setTimeout(() => {
+                                    step.classList.add('animate-solution');
+                                }, i * 200);
+                            });
+                        }, 100);
+                        
+                        // Change button text
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Show Average Turn Around Time with enhanced UI and animation
+            function showAvgTurnaroundTime() {
+                resultTitle.textContent = 'Average Turn Around Time';
+                
+                let totalTurnaroundTime = 0;
+                processData.forEach(process => {
+                    totalTurnaroundTime += process.turnaroundTime;
+                });
+                const avgTurnaroundTime = totalTurnaroundTime / processData.length;
+                
+                // Create solution button and enhanced metric card
+                let html = `
+                <div class="flex justify-end mb-4">
+                    <button id="avg-turnaround-time-solution-btn" class="solution-btn">Show Solution</button>
+                </div>
+                <div class="metric-card-enhanced">
+                    <div class="metric-icon">🔄</div>
+                    <div class="metric-label-enhanced">Average Turn Around Time</div>
+                    <div class="metric-value-enhanced">${formatNumber(avgTurnaroundTime)}</div>
+                    <div class="metric-unit-enhanced">milliseconds</div>
+                    <div class="metric-detail">
+                        Based on ${processData.length} processes with a total turnaround time of ${formatNumber(totalTurnaroundTime)} msec
+                    </div>
+                </div>
+                
+                <div id="avg-turnaround-time-solution" class="solution-container-enhanced mt-4 hidden">
+                    <h3 class="text-lg font-semibold mb-2">Solution: Average Turn Around Time</h3>
+                    <p class="mb-2">Average Turn Around Time is calculated as:</p>
+                    <div class="formula">Average Turn Around Time = Sum of all Process Turn Around Times / Number of Processes</div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 1:</strong> Find the turn around time for each process
+                        <ul class="ml-6 list-disc">
+                            ${processData.map(p => `<li>${p.pid}: ${formatNumber(p.turnaroundTime)} msec</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-3 mb-3">
+                        <strong>Step 2:</strong> Calculate the sum of all turn around times
+                        <div class="formula">
+                            ${processData.map(p => formatNumber(p.turnaroundTime)).join(' + ')} = ${formatNumber(totalTurnaroundTime)} msec
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>Step 3:</strong> Divide by the number of processes
+                        <div class="formula">
+                            ${formatNumber(totalTurnaroundTime)} / ${processData.length} = ${formatNumber(avgTurnaroundTime)} msec
+                        </div>
+                    </div>
+                </div>`;
+                
+                resultContent.innerHTML = html;
+                resultsContainer.classList.remove('hidden');
+                
+                // Add solution button event listener
+                const solutionBtn = document.getElementById('avg-turnaround-time-solution-btn');
+                const solutionContainer = document.getElementById('avg-turnaround-time-solution');
+                
+                if (solutionBtn && solutionContainer) {
+                    solutionBtn.addEventListener('click', function() {
+                        solutionContainer.classList.remove('hidden');
+                        solutionBtn.textContent = 'Solution Shown';
+                        solutionBtn.disabled = true;
+                        
+                        // Animate solution container
+                        solutionContainer.classList.add('result-card');
+                    });
+                }
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Notification function
+            function showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.textContent = message;
+                notification.className = `notification notification-${type}`;
+                document.body.appendChild(notification);
+                
+                // Remove the notification after a few seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+            
+            // Add pulse animation to metrics buttons
+            function animateMetricsButtons() {
+                const buttons = document.querySelectorAll('.action-btn');
+                buttons.forEach(button => {
+                    button.classList.add('pulse-animation');
+                    button.addEventListener('animationiteration', () => {
+                        // Remove the class after each iteration to restart the animation
+                        button.classList.remove('pulse-animation');
+                        setTimeout(() => {
+                            button.classList.add('pulse-animation');
+                        }, 50); // Small delay to ensure the class is re-added
+                    });
+                });
+            }
+            
+            // Utility function to format numbers to one decimal place
+            function formatNumber(number) {
+                return parseFloat(number).toFixed(1);
+            }
+            
+            // Initialize with 5 processes
+            generateProcessTable(5);
+        });
+    </script>
+</body>
+</html>
